@@ -21,11 +21,38 @@ app.get('/', (req, res) => {
 
 //Route pour tester les habitats
 app.get('/api/habitats', (req, res) => {
-  res.json([
-    { id: 1, nom: 'Savane', description: 'Lions et Eléphants' },
-    { id: 2, nom: 'Jungle', description: 'Singes et Oiseaux' },
-    { id: 3, nom: 'Marais', description: 'Crocodiles' },
-  ]);
+  const habitats = [
+    {
+      id: 1,
+      nom: 'Savane',
+      description: 'Vaste plaine africaine où règnent les rois de la jungle',
+      animaux: ['Lions', 'Éléphants', 'Zèbres', 'Girafes'],
+      superficie: '15 hectares',
+      temperature: '25-35°C',
+      visiteurs_par_jour: 200,
+    },
+    {
+      id: 2,
+      nom: 'Jungle',
+      description: 'Forêt tropicale luxuriante pleine de mystères',
+      animaux: ['Singes', 'Perroquets', 'Paresseux'], // ← Singes, Perroquets, Paresseux ?
+      superficie: '8 hectares',
+      temperature: '28-35°C', // ← Chaud et humide = 28-35°C ?
+      visiteurs_par_jour: 150,
+    },
+    {
+      id: 3,
+      nom: 'Marais',
+      description:
+        'Zones humides et mysterieuse, pas très attirantes mais fascinantes',
+      animaux: ['Crocodiles', 'Hérons', 'Tortues'],
+      superficie: '5 hectares',
+      temperature: '20-28°C',
+      visiteurs_par_jour: 50, // ← Moins populaire = 100 ?
+    },
+  ];
+
+  res.json(habitats);
 });
 
 //Démmarage du serveur
