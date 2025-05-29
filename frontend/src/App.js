@@ -16,15 +16,29 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Zoo d'Arcadia 🦁</h1>
-        <button onClick={fetchData}>Récupérer les habitats du backend</button>
-        {message.map((habitat, index) => (
-          <p key={index}>
-            {habitat.nom}: {habitat.description}
-          </p>
-        ))}
+      <header className="zoo-header">
+        <h1>🦁 Zoo d'Arcadia - Le Temple de la Nature 🦁</h1>
+        <button className="fetch-btn" onClick={fetchData}>
+          🌿 Découvrir nos Habitats 🌿
+        </button>
       </header>
+
+      <div className="habitats-grid">
+        {message.map((habitat, index) => (
+          <div key={index} className="habitat-card">
+            <div className="habitat-icon">
+              {habitat.nom === 'Savane'
+                ? '🦁'
+                : habitat.nom === 'Jungle'
+                ? '🐒'
+                : '🐊'}
+            </div>
+            <h3 className="habitat-name">{habitat.nom}</h3>
+            <p className="habitat-desc">{habitat.description}</p>
+            <button className="explore-btn">Explorer {habitat.nom} →</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
