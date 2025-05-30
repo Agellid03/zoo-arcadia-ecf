@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const { sequelize, Habitat, Animal } = require('./models/index');
 
 //Création de l'app Express
 const app = express();
@@ -20,43 +21,24 @@ app.get('/', (req, res) => {
 });
 
 //Route pour tester les habitats
-app.get('/api/habitats', (req, res) => {
-  const habitats = [
-    {
-      id: 1,
-      nom: 'Savane',
-      description: 'Vaste plaine africaine où règnent les rois de la jungle',
-      animaux: ['Lions', 'Éléphants', 'Zèbres', 'Girafes'],
-      superficie: '15 hectares',
-      temperature: '25-35°C',
-      visiteurs_par_jour: 200,
-    },
-    {
-      id: 2,
-      nom: 'Jungle',
-      description: 'Forêt tropicale luxuriante pleine de mystères',
-      animaux: ['Singes', 'Perroquets', 'Paresseux'],
-      superficie: '8 hectares',
-      temperature: '28-35°C',
-      visiteurs_par_jour: 150,
-    },
-    {
-      id: 3,
-      nom: 'Marais',
-      description:
-        'Zones humides et mysterieuse, pas très attirantes mais fascinantes',
-      animaux: ['Crocodiles', 'Hérons', 'Tortues'],
-      superficie: '5 hectares',
-      temperature: '20-28°C',
-      visiteurs_par_jour: 50,
-    },
-  ];
+app.get('/api/habitats', async (req, res) => {
+  try {
+    // Récupérer tous les habitats avec leurs animaux
+    const habitats = await Habitat.findAll({
+      include: 'animaux',
+    });
 
-  res.json(habitats);
+    res.json(habitats);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
-//Démmarage du serveur
-app.listen(PORT, () => {
-  console.log(`Serveur Zoo Arcadia sur le port ${PORT}`);
-  console.log(`Teste API sur : http://localhost:${PORT}`);
+// Synchroniser la base avant de démarrer le serveur
+sequelize.sync().then(() => {
+  app.listen(PORT, () => {
+    console.log(` Serveur Zoo Arcadia sur le port ${PORT}`);
+    console.log(` Teste API sur : http://localhost:${PORT}`);
+  });
 });
