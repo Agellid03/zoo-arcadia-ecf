@@ -35,9 +35,9 @@ app.get('/api/habitats', (req, res) => {
       id: 2,
       nom: 'Jungle',
       description: 'Forêt tropicale luxuriante pleine de mystères',
-      animaux: ['Singes', 'Perroquets', 'Paresseux'], // ← Singes, Perroquets, Paresseux ?
+      animaux: ['Singes', 'Perroquets', 'Paresseux'],
       superficie: '8 hectares',
-      temperature: '28-35°C', // ← Chaud et humide = 28-35°C ?
+      temperature: '28-35°C',
       visiteurs_par_jour: 150,
     },
     {
@@ -48,7 +48,7 @@ app.get('/api/habitats', (req, res) => {
       animaux: ['Crocodiles', 'Hérons', 'Tortues'],
       superficie: '5 hectares',
       temperature: '20-28°C',
-      visiteurs_par_jour: 50, // ← Moins populaire = 100 ?
+      visiteurs_par_jour: 50,
     },
   ];
 
