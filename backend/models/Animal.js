@@ -15,6 +15,7 @@ const Animal = sequelize.define('Animal', {
     allowNull: true,
   },
 
+  // RELATION: Un animal a un habitat
   habitat_id: {
     type: DataTypes.INTEGER,
     allowNull: false,

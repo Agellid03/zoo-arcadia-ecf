@@ -29,7 +29,7 @@ const Habitat = sequelize.define('Habitat', {
 
   image_url: {
     type: DataTypes.STRING,
-    allowNull: true, // ← true car optionnel au début
+    allowNull: true,
   },
 });
 
