@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
   });
 });
 
-//Route pour tester les habitats
+//Route pour récupérer les habitats
 app.get('/api/habitats', async (req, res) => {
   try {
     // Récupérer tous les habitats avec leurs animaux
