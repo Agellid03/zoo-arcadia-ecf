@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { sequelize, Habitat, Animal, User } = require('./models/index');
+const {
+  sequelize,
+  Habitat,
+  Animal,
+  User,
+  Service,
+  Avis,
+  RapportVeterinaire,
+} = require('./models/index');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -125,6 +133,41 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+//Route pour récupérer les services
+app.get('/api/services', async (req, res) => {
+  try {
+    // Récupérer tous les services
+    const services = await Service.findAll();
+
+    res.json(services);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//Route pour créer un service
+app.post('/api/services', authenticateToken, async (req, res) => {
+  try {
+    //1. Récupérer les données envoyées
+    const { nom, description } = req.body;
+
+    //2. Créer l'utilisateur en base
+    const service = await Service.create({
+      nom: nom,
+      description: description,
+    });
+
+    //3. Répondre au client
+    res.json({
+      message: 'Service créé',
+    });
+  } catch (error) {
+    console.error('Erreur', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Route protégée pour test
 app.get('/api/protected', authenticateToken, (req, res) => {
   res.json({
@@ -133,10 +176,122 @@ app.get('/api/protected', authenticateToken, (req, res) => {
   });
 });
 
+// Route pour récupérer les avis (approuvé)
+app.get('/api/avis', async (req, res) => {
+  try {
+    const avis = await Avis.findAll({ where: { statut: 'approuve' } });
+    res.json(avis);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour créé un avis
+app.post('/api/avis', async (req, res) => {
+  try {
+    //Récupérer les données envoyées
+    const { pseudo, texte } = req.body;
+
+    // Si pas de pseudo ou texte = erreur
+    if (!pseudo || !texte) {
+      return res.status(400).json({ error: 'Pseudo et texte obligatoires' });
+    }
+
+    const avis = await Avis.create({
+      pseudo: pseudo,
+      texte: texte,
+      statut: 'en_attente',
+    });
+
+    res.json({
+      message: 'Merci pour votre avis ! Il sera examiné par notre équipe.',
+    });
+  } catch (error) {
+    console.error('Erreur', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour modifier un avis
+app.put('/api/avis/:id', authenticateToken, async (req, res) => {
+  try {
+    // 1. Récupérer l'ID de l'avis à modifier
+    const avisId = req.params.id;
+
+    // 2. Récupérer le nouveau statut envoyé
+    const { statut } = req.body;
+
+    // 3. Trouver et modifier l'avis
+    const avis = await Avis.findOne({
+      where: { id: avisId },
+    });
+
+    // 4. Vérifier si avis existe
+    if (!avis) {
+      return res.status(404).json({ error: 'Avis introuvable' });
+    }
+
+    // 5. Mettre à jour avec nouveau statut + employé
+    await avis.update({
+      statut: statut,
+      employe_id: req.user.userId,
+    });
+
+    // 6. Répondre
+    res.json({ message: 'Avis mis à jour' });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Route pour créer un rapport vétérinaire
+app.post('/api/rapports', authenticateToken, async (req, res) => {
+  try {
+    // 1. Vérifier que c'est un vétérinaire
+    if (req.user.role !== '____') {
+      // ← 'veterinaire' ?
+      return res.status(403).json({ error: 'Accès réservé aux vétérinaires' });
+    }
+
+    // 2. Récupérer les données
+    const {
+      animal_id,
+      etat_animal,
+      nourriture_proposee,
+      grammage_nourriture,
+      date_passage,
+      detail_etat,
+    } = req.body;
+
+    // 3. Créer le rapport
+    const rapport = await RapportVeterinaire.____({
+      // ← create() ?
+      animal_id: animal_id,
+      etat_animal: etat_animal,
+      nourriture_proposee: nourriture_proposee,
+      grammage_nourriture: grammage_nourriture,
+      date_passage: date_passage,
+      detail_etat: detail_etat,
+      veterinaire_id: req.user.____, // ← userId ?
+    });
+
+    // 4. Répondre
+    res.json({
+      message: 'Rapport vétérinaire créé',
+      rapport: rapport,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Synchroniser la base avant de démarrer le serveur
 sequelize.sync().then(() => {
   app.listen(PORT, () => {
-    console.log(`🦁 Serveur Zoo Arcadia sur le port ${PORT}`);
-    console.log(`📡 Teste API sur : http://localhost:${PORT}`);
+    console.log(` Serveur Zoo Arcadia sur le port ${PORT}`);
+    console.log(` Teste API sur : http://localhost:${PORT}`);
   });
 });
