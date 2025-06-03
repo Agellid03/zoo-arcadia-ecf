@@ -5,9 +5,32 @@ const { sequelize, Habitat, Animal, User } = require('./models/index');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+// Middleware d'authentification
+const authenticateToken = (req, res, next) => {
+  // 1. Récupérer le token dans l'en-tête Authorization
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  // 2. Vérifier si token existe
+  if (!token) {
+    return res.status(401).json({ error: 'Token manquant' });
+  }
+
+  // 3. Vérifier si token est valide
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token invalide' });
+    }
+
+    // 4. Ajouter les infos user à la requête
+    req.user = user; // userId et role disponibles partout !
+    next();
+  });
+};
+
 //Création de l'app Express
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 //Middlewares
 app.use(cors());
@@ -37,17 +60,16 @@ app.get('/api/habitats', async (req, res) => {
   }
 });
 
-//Roite pour créer un utilisateur
-
+//Route pour créer un utilisateur
 app.post('/api/users', async (req, res) => {
   try {
-    // 1. Récuperer les données envoyées
+    // 1. Récupérer les données envoyées
     const { email, password, role } = req.body;
 
     //2. Créer l'utilisateur en base
     const user = await User.create({
       email: email,
-      password: password, // A hacher plus tard
+      password: password,
       role: role,
     });
 
@@ -84,10 +106,10 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Mot de passe incorrect' });
     }
 
-    // 6. Créer un token JWT (badge d'accès)
+    // 6. Créer un token JWT
     const token = jwt.sign(
-      { userId: user.id, role: user.role }, // ← Données dans le token
-      'SECRET_KEY_TEMP', // Clé secrète (à améliorer)
+      { userId: user.id, role: user.role }, //  Données dans le token
+      process.env.JWT_SECRET, //  Clé secrète sécurisée
       { expiresIn: '24h' }, //  Durée de validité
     );
 
@@ -103,10 +125,18 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Route protégée pour test
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({
+    message: 'Accès autorisé !',
+    user: req.user,
+  });
+});
+
 // Synchroniser la base avant de démarrer le serveur
 sequelize.sync().then(() => {
   app.listen(PORT, () => {
-    console.log(` Serveur Zoo Arcadia sur le port ${PORT}`);
-    console.log(` Teste API sur : http://localhost:${PORT}`);
+    console.log(`🦁 Serveur Zoo Arcadia sur le port ${PORT}`);
+    console.log(`📡 Teste API sur : http://localhost:${PORT}`);
   });
 });
