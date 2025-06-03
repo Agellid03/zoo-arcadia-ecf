@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { sequelize, Habitat, Animal } = require('./models/index');
+const { sequelize, Habitat, Animal, User } = require('./models/index');
 
 //Création de l'app Express
 const app = express();
@@ -31,6 +31,31 @@ app.get('/api/habitats', async (req, res) => {
     res.json(habitats);
   } catch (error) {
     console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//Roite pour créer un utilisateur
+
+app.post('/api/users', async (req, res) => {
+  try {
+    // 1. Récuperer les données envoyées
+    const { email, password, role } = req.body;
+
+    //2. Créer l'utilisateur en base
+    const user = await User.create({
+      email: email,
+      password: password, // A hacher plus tard
+      role: role,
+    });
+
+    //3. Répondre au client
+    res.json({
+      message: 'Utilisateur créé',
+      user: user,
+    });
+  } catch (error) {
+    console.error('Erreur', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
