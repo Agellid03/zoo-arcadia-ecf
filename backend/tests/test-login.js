@@ -1,10 +1,10 @@
 const fetch = require('node-fetch');
 
-const testUserCreation = async () => {
+const testLogin = async () => {
   try {
-    console.log('🧪 Test création utilisateur...');
+    console.log('Test connexion..');
 
-    const response = await fetch('http://localhost:5000/api/users', {
+    const response = await fetch('http://localhost:5000/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -12,15 +12,14 @@ const testUserCreation = async () => {
       body: JSON.stringify({
         email: 'admin2@zoo.fr',
         password: 'motdepasse1234',
-        role: 'admin',
       }),
     });
 
     const result = await response.json();
-    console.log(' Résultat:', result);
+    console.log(('Résultat:', result));
   } catch (error) {
-    console.error(' Erreur test:', error);
+    console.error('Erreur test:', error);
   }
 };
 
-testUserCreation();
+testLogin();
