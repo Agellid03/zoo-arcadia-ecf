@@ -250,8 +250,7 @@ app.put('/api/avis/:id', authenticateToken, async (req, res) => {
 app.post('/api/rapports', authenticateToken, async (req, res) => {
   try {
     // 1. Vérifier que c'est un vétérinaire
-    if (req.user.role !== '____') {
-      // ← 'veterinaire' ?
+    if (req.user.role !== 'veterinaire') {
       return res.status(403).json({ error: 'Accès réservé aux vétérinaires' });
     }
 
@@ -266,15 +265,14 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
     } = req.body;
 
     // 3. Créer le rapport
-    const rapport = await RapportVeterinaire.____({
-      // ← create() ?
+    const rapport = await RapportVeterinaire.create({
       animal_id: animal_id,
       etat_animal: etat_animal,
       nourriture_proposee: nourriture_proposee,
       grammage_nourriture: grammage_nourriture,
       date_passage: date_passage,
       detail_etat: detail_etat,
-      veterinaire_id: req.user.____, // ← userId ?
+      veterinaire_id: req.user.userId,
     });
 
     // 4. Répondre

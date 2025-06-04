@@ -10,16 +10,16 @@ const testUserCreation = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: 'admin2@zoo.fr',
-        password: 'motdepasse1234',
-        role: 'admin',
+        email: 'employe1@zoo.fr',
+        password: 'motdepasse123',
+        role: 'employe',
       }),
     });
 
     const result = await response.json();
-    console.log(' Résultat:', result);
+    console.log('✅ Résultat:', result);
   } catch (error) {
-    console.error(' Erreur test:', error);
+    console.error('❌ Erreur test:', error);
   }
 };
 
