@@ -68,6 +68,38 @@ app.get('/api/habitats', async (req, res) => {
   }
 });
 
+// Route pour créer un animal
+app.post('/api/animaux', authenticateToken, async (req, res) => {
+  try {
+    // 1. Vérifier que c'est un admin
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    // 2. Récupérer les données
+    const { prenom, race, habitat_id, image_url } = req.body;
+
+    // 3. Créer l'animal
+    const animal = await Animal.create({
+      prenom: prenom,
+      race: race,
+      habitat_id: habitat_id,
+      image_url: image_url,
+    });
+
+    // 4. Répondre
+    res.json({
+      message: 'Animal créé avec succès',
+      animal: animal,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 //Route pour créer un utilisateur
 app.post('/api/users', async (req, res) => {
   try {
