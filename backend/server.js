@@ -1,4 +1,5 @@
 const express = require('express');
+const connectMongoDB = require('./config/mongodb');
 const cors = require('cors');
 require('dotenv').config();
 const {
@@ -465,6 +466,7 @@ app.get('/api/protected', authenticateToken, (req, res) => {
 //* DÉMARRAGE SERVEUR
 
 sequelize.sync().then(() => {
+  connectMongoDB();
   app.listen(PORT, () => {
     console.log(`🦁 Serveur Zoo Arcadia sur le port ${PORT}`);
     console.log(`📡 Teste API sur : http://localhost:${PORT}`);
