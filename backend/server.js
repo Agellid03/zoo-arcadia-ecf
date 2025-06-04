@@ -9,42 +9,41 @@ const {
   Service,
   Avis,
   RapportVeterinaire,
+  ConsommationNourriture,
 } = require('./models/index');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-// Middleware d'authentification
+//* MIDDLEWARE D'AUTHENTIFICATION
+
 const authenticateToken = (req, res, next) => {
   // 1. Récupérer le token dans l'en-tête Authorization
-  const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-
   // 2. Vérifier si token existe
   if (!token) {
     return res.status(401).json({ error: 'Token manquant' });
   }
-
   // 3. Vérifier si token est valide
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Token invalide' });
     }
-
     // 4. Ajouter les infos user à la requête
-    req.user = user; // userId et role disponibles partout !
+    req.user = user;
     next();
   });
 };
 
-//Création de l'app Express
+//* CONFIGURATION EXPRESS
+
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 //Middlewares
 app.use(cors());
 app.use(express.json());
 
-//Route de test - première API !
+//* ROUTE DE TEST
+
 app.get('/', (req, res) => {
   res.json({
     message: 'API Zoo Arcadia fonctionne !',
@@ -53,67 +52,19 @@ app.get('/', (req, res) => {
   });
 });
 
-//Route pour récupérer les habitats
-app.get('/api/habitats', async (req, res) => {
-  try {
-    // Récupérer tous les habitats avec leurs animaux
-    const habitats = await Habitat.findAll({
-      include: 'animaux',
-    });
+//* ROUTES AUTHENTIFICATION
 
-    res.json(habitats);
-  } catch (error) {
-    console.error('Erreur:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Route pour créer un animal
-app.post('/api/animaux', authenticateToken, async (req, res) => {
-  try {
-    // 1. Vérifier que c'est un admin
-    if (req.user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Accès réservé aux administrateurs' });
-    }
-
-    // 2. Récupérer les données
-    const { prenom, race, habitat_id, image_url } = req.body;
-
-    // 3. Créer l'animal
-    const animal = await Animal.create({
-      prenom: prenom,
-      race: race,
-      habitat_id: habitat_id,
-      image_url: image_url,
-    });
-
-    // 4. Répondre
-    res.json({
-      message: 'Animal créé avec succès',
-      animal: animal,
-    });
-  } catch (error) {
-    console.error('Erreur:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-//Route pour créer un utilisateur
+// Création utilisateur
 app.post('/api/users', async (req, res) => {
   try {
-    // 1. Récupérer les données envoyées
     const { email, password, role } = req.body;
 
-    //2. Créer l'utilisateur en base
     const user = await User.create({
       email: email,
       password: password,
       role: role,
     });
 
-    //3. Répondre au client
     res.json({
       message: 'Utilisateur créé',
       user: user,
@@ -124,36 +75,29 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// Route de connexion
+// Connexion
 app.post('/api/login', async (req, res) => {
   try {
-    // 1. Récupérer email et password envoyés
     const { email, password } = req.body;
 
-    // 2. Chercher l'utilisateur en base
     const user = await User.findOne({ where: { email } });
 
-    // 3. Vérifier si user existe
     if (!user) {
       return res.status(401).json({ error: 'Email introuvable' });
     }
 
-    // 4. Comparer le mot de passe (hashé vs envoyé)
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    // 5. Si mot de passe incorrect
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Mot de passe incorrect' });
     }
 
-    // 6. Créer un token JWT
     const token = jwt.sign(
-      { userId: user.id, role: user.role }, //  Données dans le token
-      process.env.JWT_SECRET, //  Clé secrète sécurisée
-      { expiresIn: '24h' }, //  Durée de validité
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' },
     );
 
-    // 7. Répondre avec succès
     res.json({
       message: 'Connexion réussie',
       token: token,
@@ -165,12 +109,128 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-//Route pour récupérer les services
+//* ROUTES HABITATS
+
+// Lister tous les habitats (PUBLIC)
+app.get('/api/habitats', async (req, res) => {
+  try {
+    const habitats = await Habitat.findAll({
+      include: 'animaux',
+    });
+    res.json(habitats);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Créer habitat (ADMIN)
+app.post('/api/habitats', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    const habitat = await Habitat.create(req.body);
+    res.json({ message: 'Habitat créé', habitat });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Modifier habitat (ADMIN)
+app.put('/api/habitats/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    await Habitat.update(req.body, { where: { id: req.params.id } });
+    res.json({ message: 'Habitat mis à jour' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTES ANIMAUX
+
+// Détail animal + dernier rapport (PUBLIC)
+app.get('/api/animaux/:id', async (req, res) => {
+  try {
+    const animalId = req.params.id;
+
+    const animal = await Animal.findOne({
+      where: { id: animalId },
+      include: [
+        { model: Habitat, as: 'habitat' },
+        {
+          model: RapportVeterinaire,
+          as: 'rapports',
+          limit: 1,
+          order: [['date_passage', 'DESC']],
+        },
+      ],
+    });
+
+    if (!animal) {
+      return res.status(404).json({ error: 'Animal introuvable' });
+    }
+
+    res.json(animal);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Créer animal (ADMIN)
+app.post('/api/animaux', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const { prenom, race, habitat_id, image_url } = req.body;
+
+    const animal = await Animal.create({
+      prenom: prenom,
+      race: race,
+      habitat_id: habitat_id,
+      image_url: image_url,
+    });
+
+    res.json({
+      message: 'Animal créé avec succès',
+      animal: animal,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Modifier animal (ADMIN)
+app.put('/api/animaux/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    await Animal.update(req.body, { where: { id: req.params.id } });
+    res.json({ message: 'Animal mis à jour' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTES SERVICES
+
+// Lister services (PUBLIC)
 app.get('/api/services', async (req, res) => {
   try {
-    // Récupérer tous les services
     const services = await Service.findAll();
-
     res.json(services);
   } catch (error) {
     console.error('Erreur:', error);
@@ -178,19 +238,16 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
-//Route pour créer un service
+// Créer service (ADMIN/EMPLOYÉ)
 app.post('/api/services', authenticateToken, async (req, res) => {
   try {
-    //1. Récupérer les données envoyées
     const { nom, description } = req.body;
 
-    //2. Créer l'utilisateur en base
     const service = await Service.create({
       nom: nom,
       description: description,
     });
 
-    //3. Répondre au client
     res.json({
       message: 'Service créé',
     });
@@ -200,15 +257,9 @@ app.post('/api/services', authenticateToken, async (req, res) => {
   }
 });
 
-// Route protégée pour test
-app.get('/api/protected', authenticateToken, (req, res) => {
-  res.json({
-    message: 'Accès autorisé !',
-    user: req.user,
-  });
-});
+//* ROUTES AVIS
 
-// Route pour récupérer les avis (approuvé)
+// Lister avis approuvés (PUBLIC)
 app.get('/api/avis', async (req, res) => {
   try {
     const avis = await Avis.findAll({ where: { statut: 'approuve' } });
@@ -219,13 +270,11 @@ app.get('/api/avis', async (req, res) => {
   }
 });
 
-// Route pour créé un avis
+// Créer avis (VISITEUR)
 app.post('/api/avis', async (req, res) => {
   try {
-    //Récupérer les données envoyées
     const { pseudo, texte } = req.body;
 
-    // Si pas de pseudo ou texte = erreur
     if (!pseudo || !texte) {
       return res.status(400).json({ error: 'Pseudo et texte obligatoires' });
     }
@@ -245,32 +294,25 @@ app.post('/api/avis', async (req, res) => {
   }
 });
 
-// Route pour modifier un avis
+// Valider avis (EMPLOYÉ)
 app.put('/api/avis/:id', authenticateToken, async (req, res) => {
   try {
-    // 1. Récupérer l'ID de l'avis à modifier
     const avisId = req.params.id;
-
-    // 2. Récupérer le nouveau statut envoyé
     const { statut } = req.body;
 
-    // 3. Trouver et modifier l'avis
     const avis = await Avis.findOne({
       where: { id: avisId },
     });
 
-    // 4. Vérifier si avis existe
     if (!avis) {
       return res.status(404).json({ error: 'Avis introuvable' });
     }
 
-    // 5. Mettre à jour avec nouveau statut + employé
     await avis.update({
       statut: statut,
       employe_id: req.user.userId,
     });
 
-    // 6. Répondre
     res.json({ message: 'Avis mis à jour' });
   } catch (error) {
     console.error('Erreur:', error);
@@ -278,15 +320,39 @@ app.put('/api/avis/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Route pour créer un rapport vétérinaire
+//* ROUTES RAPPORTS VÉTÉRINAIRES
+
+// Lister tous les rapports (ADMIN)
+app.get('/api/rapports', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const rapports = await RapportVeterinaire.findAll({
+      include: [
+        { model: Animal, as: 'animal' },
+        { model: User, as: 'veterinaire' },
+      ],
+      order: [['date_passage', 'DESC']],
+    });
+
+    res.json(rapports);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Créer rapport (VÉTÉRINAIRE)
 app.post('/api/rapports', authenticateToken, async (req, res) => {
   try {
-    // 1. Vérifier que c'est un vétérinaire
     if (req.user.role !== 'veterinaire') {
       return res.status(403).json({ error: 'Accès réservé aux vétérinaires' });
     }
 
-    // 2. Récupérer les données
     const {
       animal_id,
       etat_animal,
@@ -296,7 +362,6 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
       detail_etat,
     } = req.body;
 
-    // 3. Créer le rapport
     const rapport = await RapportVeterinaire.create({
       animal_id: animal_id,
       etat_animal: etat_animal,
@@ -307,7 +372,6 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
       veterinaire_id: req.user.userId,
     });
 
-    // 4. Répondre
     res.json({
       message: 'Rapport vétérinaire créé',
       rapport: rapport,
@@ -318,10 +382,91 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
   }
 });
 
-// Synchroniser la base avant de démarrer le serveur
+//* ROUTES CONSOMMATION NOURRITURE
+
+// Lister consommations (VÉTÉRINAIRE)
+app.get('/api/consommations', authenticateToken, async (req, res) => {
+  try {
+    const consommations = await ConsommationNourriture.findAll({
+      include: [
+        { model: Animal, as: 'animal' },
+        { model: User, as: 'employe' },
+      ],
+      order: [['date_consommation', 'DESC']],
+    });
+
+    res.json(consommations);
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Enregistrer consommation (EMPLOYÉ)
+app.post('/api/consommations', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'employe') {
+      return res.status(403).json({ error: 'Accès réservé aux employés' });
+    }
+
+    const {
+      animal_id,
+      date_consommation,
+      heure_consommation,
+      nourriture_donnee,
+      quantite,
+    } = req.body;
+
+    const consommation = await ConsommationNourriture.create({
+      animal_id,
+      employe_id: req.user.userId,
+      date_consommation,
+      heure_consommation,
+      nourriture_donnee,
+      quantite,
+    });
+
+    res.json({
+      message: 'Consommation enregistrée',
+      consommation,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTE CONTACT
+
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { titre, description, email } = req.body;
+
+    // Simulation envoi email pour l'ECF
+    console.log('📧 Contact reçu:', { titre, description, email });
+
+    res.json({
+      message: 'Votre message a été envoyé. Nous vous répondrons rapidement.',
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTE DE TEST PROTECTION
+
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({
+    message: 'Accès autorisé !',
+    user: req.user,
+  });
+});
+
+//* DÉMARRAGE SERVEUR
+
 sequelize.sync().then(() => {
   app.listen(PORT, () => {
-    console.log(` Serveur Zoo Arcadia sur le port ${PORT}`);
-    console.log(` Teste API sur : http://localhost:${PORT}`);
+    console.log(`🦁 Serveur Zoo Arcadia sur le port ${PORT}`);
+    console.log(`📡 Teste API sur : http://localhost:${PORT}`);
   });
 });
