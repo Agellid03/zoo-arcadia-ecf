@@ -156,6 +156,28 @@ app.put('/api/habitats/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Supprimer habitat (ADMIN)
+app.delete('/api/habitats/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    const habitatId = parseInt(req.params.id);
+    const habitat = await Habitat.findByPk(habitatId);
+    if (!habitat) {
+      return res.status(404).json({ error: 'Habitat introuvable' });
+    }
+
+    await habitat.destroy();
+
+    res.json({ message: 'Habitat supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Ajouter commentaire vétérinaire sur habitat
 app.post(
   '/api/habitats/:id/commentaires',
@@ -270,6 +292,27 @@ app.put('/api/animaux/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Supprimer animal (ADMIN)
+app.delete('/api/animaux/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    const animalId = parseInt(req.params.id);
+    const animal = await Animal.findByPk(animalId);
+    if (!animal) {
+      return res.status(404).json({ error: 'Animal introuvable' });
+    }
+
+    await animal.destroy();
+    res.json({ message: 'Animal supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 //* ROUTE STATISTIQUES - Incrémenter consultation animal
 app.post('/api/animaux/:id/view', async (req, res) => {
   try {
@@ -333,6 +376,27 @@ app.post('/api/services', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Supprimer service (ADMIN)
+app.delete('/api/services/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Accès admin requis' });
+    }
+
+    const serviceId = parseInt(req.params.id);
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ error: 'Service introuvable' });
+    }
+
+    await service.destroy();
+    res.json({ message: 'Service supprimé avec succès' });
+  } catch (error) {
+    console.error('Erreur:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
