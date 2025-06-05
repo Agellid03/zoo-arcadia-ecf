@@ -12,6 +12,7 @@ const {
   Avis,
   RapportVeterinaire,
   ConsommationNourriture,
+  CommentaireHabitat,
 } = require('./models/index');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -154,6 +155,47 @@ app.put('/api/habitats/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+// Ajouter commentaire vétérinaire sur habitat
+app.post(
+  '/api/habitats/:id/commentaires',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // 1. Vérifier que c'est un vétérinaire
+      if (req.user.role !== 'veterinaire') {
+        return res
+          .status(403)
+          .json({ error: 'Accès réservé aux vétérinaires' });
+      }
+
+      const habitatId = parseInt(req.params.id);
+      const { commentaire, statut_habitat } = req.body;
+
+      // 2. Vérifier que l'habitat existe
+      const habitat = await Habitat.findByPk(habitatId);
+      if (!habitat) {
+        return res.status(404).json({ error: 'Habitat introuvable' });
+      }
+
+      // 3. Créer le commentaire
+      const nouveauCommentaire = await CommentaireHabitat.create({
+        habitat_id: habitatId,
+        veterinaire_id: req.user.userId,
+        commentaire: commentaire,
+        statut_habitat: statut_habitat,
+      });
+
+      res.json({
+        message: 'Commentaire ajouté avec succès',
+        commentaire: nouveauCommentaire,
+      });
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  },
+);
 
 //* ROUTES ANIMAUX
 
