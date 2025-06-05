@@ -1,6 +1,7 @@
 const express = require('express');
 const connectMongoDB = require('./config/mongodb');
 const cors = require('cors');
+const AnimalStats = require('./models/AnimalStats');
 require('dotenv').config();
 const {
   sequelize,
@@ -18,6 +19,7 @@ const bcrypt = require('bcryptjs');
 //* MIDDLEWARE D'AUTHENTIFICATION
 
 const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
   // 1. Récupérer le token dans l'en-tête Authorization
   const token = authHeader && authHeader.split(' ')[1];
   // 2. Vérifier si token existe
@@ -226,6 +228,41 @@ app.put('/api/animaux/:id', authenticateToken, async (req, res) => {
   }
 });
 
+//* ROUTE STATISTIQUES - Incrémenter consultation animal
+app.post('/api/animaux/:id/view', async (req, res) => {
+  try {
+    const animalId = parseInt(req.params.id);
+
+    // 1. Récupérer l'animal pour avoir son nom
+    const animal = await Animal.findByPk(animalId);
+    if (!animal) {
+      return res.status(404).json({ error: 'Animal introuvable' });
+    }
+
+    // 2. Incrémenter ou créer statistique MongoDB
+    await AnimalStats.findOneAndUpdate(
+      { animal_id: animalId },
+      {
+        animal_name: animal.prenom,
+        $inc: { views: 1 },
+        last_viewed: new Date(),
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
+
+    res.json({
+      message: 'Consultation enregistrée',
+      animal: animal.prenom,
+    });
+  } catch (error) {
+    console.error('Erreur stats:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 //* ROUTES SERVICES
 
 // Lister services (PUBLIC)
@@ -383,6 +420,37 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
   }
 });
 
+//* ROUTE DASHBOARD - Statistiques consultation animaux (ADMIN)
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+  try {
+    // Vérifier que c'est un admin
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    // Récupérer toutes les statistiques triées par popularité
+    const stats = await AnimalStats.find({})
+      .sort({ views: -1 }) // Tri décroissant (plus populaire en premier)
+      .limit(20); // Top 20 pour éviter surcharge
+
+    // Calculer statistiques globales
+    const totalViews = await AnimalStats.aggregate([
+      { $group: { _id: null, total: { $sum: '$views' } } },
+    ]);
+
+    res.json({
+      animals_stats: stats,
+      total_consultations: totalViews[0]?.total || 0,
+      most_popular: stats[0]?.animal_name || 'Aucune consultation',
+      stats_count: stats.length,
+    });
+  } catch (error) {
+    console.error('Erreur dashboard:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 //* ROUTES CONSOMMATION NOURRITURE
 
 // Lister consommations (VÉTÉRINAIRE)
