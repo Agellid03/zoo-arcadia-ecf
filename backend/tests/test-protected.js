@@ -26,12 +26,12 @@ const testWithToken = async () => {
 
     const response = await fetch('http://localhost:5000/api/protected', {
       headers: {
-        Authorization: `Bearer ${token}`, // ← Format Bearer + token
+        Authorization: `Bearer ${token}`,
       },
     });
 
     const result = await response.json();
-    console.log('✅ Résultat (doit réussir):', result);
+    console.log(' Résultat (doit réussir):', result);
   } catch (error) {
     console.error('Erreur:', error);
   }
