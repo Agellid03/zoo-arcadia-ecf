@@ -6,6 +6,7 @@ const Service = require('./Service');
 const Avis = require('./Avis');
 const RapportVeterinaire = require('./RapportVeterinaire');
 const ConsommationNourriture = require('./ConsommationNourriture');
+const CommentaireHabitat = require('./CommentaireHabitat');
 
 // Associations Habitat - Animal
 Habitat.hasMany(Animal, { foreignKey: 'habitat_id', as: 'animaux' });
@@ -49,6 +50,28 @@ ConsommationNourriture.belongsTo(User, {
   as: 'employe',
 });
 
+// Associations Commentaire Habitat - Habitat
+CommentaireHabitat.belongsTo(Habitat, {
+  foreignKey: 'habitat_id',
+  as: 'habitat',
+});
+
+CommentaireHabitat.belongsTo(User, {
+  foreignKey: 'veterinaire_id',
+  as: 'veterinaire',
+});
+
+// Relations inverses
+Habitat.hasMany(CommentaireHabitat, {
+  foreignKey: 'habitat_id',
+  as: 'commentaires',
+});
+
+User.hasMany(CommentaireHabitat, {
+  foreignKey: 'veterinaire_id',
+  as: 'commentaires_habitats', // ← Alias unique
+});
+
 module.exports = {
   sequelize,
   Habitat,
@@ -58,4 +81,5 @@ module.exports = {
   Avis,
   RapportVeterinaire,
   ConsommationNourriture,
+  CommentaireHabitat,
 };
