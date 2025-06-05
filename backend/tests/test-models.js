@@ -22,7 +22,7 @@ const testModels = async () => {
       habitat_id: savane.id,
     });
 
-    // 4. TESTER LES RELATIONS MAINTENANT !
+    // 4. Test des relations maintenant
     console.log('🔗 Test des relations...');
 
     // Récupérer habitat avec ses animaux

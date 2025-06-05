@@ -5,7 +5,7 @@ const testRapportVeterinaire = async () => {
     console.log('🩺 Test création rapport vétérinaire...');
 
     // Token d'un vétérinaire (il faut d'abord créer un user vétérinaire !)
-    const token = 'TON_TOKEN_VETERINAIRE';
+    const token = 'Le_TOKEN_VETERINAIRE';
 
     const response = await fetch('http://localhost:5000/api/rapports', {
       method: 'POST',
@@ -14,10 +14,10 @@ const testRapportVeterinaire = async () => {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        animal_id: 1, // Animal existant
+        animal_id: 1,
         etat_animal: 'En bonne santé',
         nourriture_proposee: 'Viande de bœuf',
-        grammage_nourriture: 5000, // 5kg en grammes
+        grammage_nourriture: 5000,
         date_passage: '2025-06-03',
         detail_etat: 'Animal très actif, bon appétit',
       }),
