@@ -11,8 +11,8 @@ const testLogin = async () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: 'admin2@zoo.fr',
-        password: 'motdepasse1234',
+        email: 'admin@zoo.fr',
+        password: 'admin123',
       }),
     });
 
