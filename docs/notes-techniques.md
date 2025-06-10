@@ -10,6 +10,7 @@
 - **SPA** : Single Page Application
 - **Installation** : npm install react-router-dom
 
+
 ## Conventions URLs
 - **URLs minuscules** : /habitats, /services, /contact (standard web)
 - **Cohérence** : path="/contact" doit = to="/contact"
@@ -42,3 +43,8 @@
 - **Function declaration** : function Component() {} (classique)  
 - **Choix** : arrow = plus concis, function = meilleur debug
 - **Performance** : différence négligeable en React
+
+## React useState Hook
+- **const [state, setState] = useState(defaultValue)** 
+- **Controlled components** : value={state} onChange={handler}
+- **Spread operator** : {...formData, [name]: value}
