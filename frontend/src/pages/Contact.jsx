@@ -8,15 +8,22 @@ import {
   Button,
   Alert,
 } from 'react-bootstrap';
+import axios from 'axios';
 
 const Contact = () => {
-  // ÉTAT FORMULAIRE
+  // ÉTATS FORMULAIRE
   const [formData, setFormData] = useState({
     titre: '',
     description: '',
     email: '',
   });
-  const [showSuccess, setShowSuccess] = useState(false);
+
+  // ÉTATS UI
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
 
   // HANDLER CHANGEMENT INPUT
   const handleChange = (e) => {
@@ -24,19 +31,80 @@ const Contact = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    // Clear error when user starts typing
+    if (error) setError(null);
   };
 
-  // HANDLER SOUMISSION
-  const handleSubmit = (e) => {
+  // VALIDATION CÔTÉ CLIENT
+  const validateForm = () => {
+    if (!formData.titre.trim()) {
+      setError('Le titre est obligatoire');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError("L'email est obligatoire");
+      return false;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Format email invalide');
+      return false;
+    }
+    if (!formData.description.trim()) {
+      setError('Le message est obligatoire');
+      return false;
+    }
+    if (formData.description.length < 10) {
+      setError('Le message doit contenir au moins 10 caractères');
+      return false;
+    }
+    return true;
+  };
+
+  // HANDLER SOUMISSION avec backend
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('Données formulaire:', formData);
-    setShowSuccess(true);
+    // Validation côté client
+    if (!validateForm()) return;
 
-    setFormData({ titre: '', description: '', email: '' });
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Masquer message après 3s
-    setTimeout(() => setShowSuccess(false), 3000);
+      console.log('📤 Envoi message contact:', formData);
+
+      // APPEL API CONTACT
+      const response = await axios.post(`${API_BASE_URL}/contact`, {
+        titre: formData.titre.trim(),
+        description: formData.description.trim(),
+        email: formData.email.trim(),
+      });
+
+      console.log('✅ Message envoyé:', response.data);
+
+      // SUCCESS STATE
+      setSuccess(true);
+      setFormData({ titre: '', description: '', email: '' });
+
+      // Auto-hide success après 5s
+      setTimeout(() => setSuccess(false), 5000);
+    } catch (err) {
+      console.error('❌ Erreur envoi contact:', err);
+
+      // GESTION ERREURS SPÉCIFIQUES
+      if (err.response?.status === 400) {
+        setError('Données invalides. Vérifiez vos informations.');
+      } else if (err.response?.status === 500) {
+        setError('Erreur serveur. Réessayez plus tard.');
+      } else if (err.request) {
+        setError('Problème de connexion. Vérifiez votre internet.');
+      } else {
+        setError('Erreur inattendue. Contactez-nous par téléphone.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +121,8 @@ const Contact = () => {
             Une question ? Un commentaire ? N'hésitez pas à nous écrire !
           </p>
 
-          {showSuccess && (
+          {/* ALERT SUCCÈS */}
+          {success && (
             <Alert variant="success" className="text-center">
               ✅ Votre message a été envoyé avec succès !
             </Alert>
@@ -62,6 +131,7 @@ const Contact = () => {
           <Card className="card-zoo">
             <Card.Body>
               <Form onSubmit={handleSubmit}>
+                {/* TITRE */}
                 <Form.Group className="mb-3">
                   <Form.Label>Titre *</Form.Label>
                   <Form.Control
@@ -74,6 +144,7 @@ const Contact = () => {
                   />
                 </Form.Group>
 
+                {/* EMAIL */}
                 <Form.Group className="mb-3">
                   <Form.Label>Email *</Form.Label>
                   <Form.Control
@@ -86,6 +157,7 @@ const Contact = () => {
                   />
                 </Form.Group>
 
+                {/* DESCRIPTION */}
                 <Form.Group className="mb-3">
                   <Form.Label>Message *</Form.Label>
                   <Form.Control
@@ -99,9 +171,18 @@ const Contact = () => {
                   />
                 </Form.Group>
 
+                {/* BOUTON ENVOI */}
                 <div className="text-center">
-                  <Button type="submit" className="btn-zoo btn-lg">
-                    📧 Envoyer le message
+                  <Button
+                    type="submit"
+                    className="btn-zoo btn-lg"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>⏳ Envoi en cours...</>
+                    ) : (
+                      '📧 Envoyer le message'
+                    )}
                   </Button>
                 </div>
               </Form>

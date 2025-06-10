@@ -6,7 +6,6 @@ import {
   Card,
   Button,
   Spinner,
-  Alert,
   Badge,
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -17,7 +16,6 @@ const Accueil = () => {
   const [habitats, setHabitats] = useState([]);
   const [services, setServices] = useState([]);
   const [avis, setAvis] = useState([]);
-  const [stats, setStats] = useState(null);
 
   // Loading states séparés
   const [loadingHabitats, setLoadingHabitats] = useState(true);
@@ -131,6 +129,38 @@ const Accueil = () => {
         </Col>
       </Row>
 
+      {/* STATISTIQUES RAPIDES */}
+      <Row className="mb-5">
+        <Col md={12}>
+          <Card className="card-zoo" style={{ backgroundColor: '#f8fffe' }}>
+            <Card.Body>
+              <Row className="text-center">
+                <Col md={3}>
+                  <h3 style={{ color: 'var(--zoo-primary)' }}>
+                    {loadingHabitats ? <Spinner size="sm" /> : habitats.length}+
+                  </h3>
+                  <p className="mb-0">Habitats naturels</p>
+                </Col>
+                <Col md={3}>
+                  <h3 style={{ color: 'var(--zoo-primary)' }}>
+                    {loadingServices ? <Spinner size="sm" /> : services.length}
+                  </h3>
+                  <p className="mb-0">Services disponibles</p>
+                </Col>
+                <Col md={3}>
+                  <h3 style={{ color: 'var(--zoo-primary)' }}>65</h3>
+                  <p className="mb-0">Années d'expérience</p>
+                </Col>
+                <Col md={3}>
+                  <h3 style={{ color: 'var(--zoo-primary)' }}>100%</h3>
+                  <p className="mb-0">Énergie renouvelable</p>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
       {/* PREVIEW HABITATS */}
       <Row className="mb-5">
         <Col md={12}>
@@ -160,6 +190,51 @@ const Accueil = () => {
                   </Card.Text>
                   <Button as={Link} to="/habitats" className="btn-zoo">
                     Découvrir
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))
+        )}
+      </Row>
+
+      {/* SECTION SERVICES - AJOUT ICI */}
+      <Row className="mb-5">
+        <Col md={12}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 style={{ color: 'var(--zoo-primary)' }}>Nos Services</h2>
+            <Button as={Link} to="/services" variant="outline-success">
+              Découvrir tous nos services →
+            </Button>
+          </div>
+        </Col>
+
+        {loadingServices ? (
+          <Col md={12} className="text-center">
+            <Spinner animation="border" variant="success" />
+            <p className="mt-2">Chargement des services...</p>
+          </Col>
+        ) : (
+          services.slice(0, 3).map((service) => (
+            <Col md={4} key={service.id} className="mb-4">
+              <Card className="card-zoo h-100">
+                <Card.Body className="text-center">
+                  <div style={{ fontSize: '2.5rem' }} className="mb-3">
+                    {service.icone || '🎯'}
+                  </div>
+                  <Card.Title style={{ color: 'var(--zoo-primary)' }}>
+                    {service.nom}
+                    {service.gratuit && (
+                      <Badge bg="success" className="ms-2">
+                        Gratuit
+                      </Badge>
+                    )}
+                  </Card.Title>
+                  <Card.Text>
+                    {service.description?.substring(0, 80)}...
+                  </Card.Text>
+                  <Button as={Link} to="/services" className="btn-zoo">
+                    En savoir plus
                   </Button>
                 </Card.Body>
               </Card>
