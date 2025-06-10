@@ -1,5 +1,10 @@
 # Notes Techniques - Zoo Arcadia
 
+## Gestion dépendances
+- **Chaque dossier** = projet npm séparé avec son package.json
+- **Frontend** = React, Router, Bootstrap
+- **Backend** = Express, Sequelize, JWT
+
 ## React Router
 - **Concept** : Gestion navigation SPA sans rechargement
 - **SPA** : Single Page Application
