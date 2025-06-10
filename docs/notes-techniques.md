@@ -26,7 +26,14 @@
 - **BrowserRouter** : Conteneur principal, utilise History API
 - **Routes** : Remplace Switch v5, analyse URL actuelle  
 - **Route** : path="/habitats" element={<Habitats />}
-- **element={}** : v6, remplace component= de v5
+- **element={}** : v6, remplace component= de 
+
+## Navigation Dynamique React Router
+- **useParams()** : récupère paramètres depuis URL (/habitat/:id)
+- **useNavigate()** : navigation programmatique (redirections)
+- **Dependency array [id]** : useEffect se re-exécute si ID change
+- **Breadcrumb** : navigation hiérarchique pour UX
+- **Link avec paramètres** : to={`/animal/${animal.id}`}
 
 ## Architecture Header
 - **Séparation composants** : Header réutilisable sur toutes les pages
@@ -48,3 +55,37 @@
 - **const [state, setState] = useState(defaultValue)** 
 - **Controlled components** : value={state} onChange={handler}
 - **Spread operator** : {...formData, [name]: value}
+
+## React Hooks Avancés
+- **useEffect(fn, [])** : side effects, remplace componentDidMount
+- **Dependency array** : [] = 1 fois, [state] = quand state change
+- **cleanup** : return function pour nettoyer (éviter memory leaks)
+
+## useEffect - Compréhension
+- **Rôle** : exécuter code APRÈS affichage composant
+- **[] vide** : exécution 1 seule fois (comme componentDidMount)
+- **[variable]** : re-exécute SI variable change
+- **Sans tableau** : re-exécute à chaque render (éviter !)
+- **Usage typique** : appels API, timers, subscriptions
+
+## Gestion États Asynchrones
+- **Loading state** : feedback utilisateur pendant chargement
+- **Error state** : gestion robuste erreurs réseau/serveur
+- **Success state** : affichage données quand tout OK
+
+## Axios HTTP Client
+- **axios.get(url)** : requête GET, retourne Promise
+- **async/await** : syntaxe moderne pour asynchrone
+- **try/catch/finally** : gestion complète erreurs
+
+## Pattern API Duplication
+- **Structure identique** : useState(loading/error/data) + useEffect + fetchFunction
+- **Seuls changements** : endpoint API + structure données affichage
+- **Réutilisabilité** : 80% code identique entre pages
+- **Maintenance** : bug fixé 1 fois = fixé partout
+
+## Multi-API Calls
+- **useEffect multiples** : chargement parallèle de différentes données
+- **Loading states séparés** : UX progressive, chaque section charge indépendamment
+- **slice(0, 3)** : limiter résultats pour preview
+- **substring(0, 100)** : tronquer texte long

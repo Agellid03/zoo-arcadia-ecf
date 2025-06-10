@@ -7,6 +7,7 @@ import Habitats from './pages/Habitats';
 import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Footer from './components/Footer';
+import HabitatDetail from './pages/HabitatDetail';
 const App = () => {
   return (
     <div className="App">
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/habitats" element={<Habitats />} />
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/habitat/:id" element={<HabitatDetail />} />
         </Routes>
         <Footer />
       </Router>
