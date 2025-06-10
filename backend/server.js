@@ -128,6 +128,32 @@ app.get('/api/habitats', async (req, res) => {
   }
 });
 
+// Détail habitat avec animaux (PUBLIC)
+app.get('/api/habitats/:id', async (req, res) => {
+  try {
+    const habitatId = parseInt(req.params.id);
+
+    const habitat = await Habitat.findOne({
+      where: { id: habitatId },
+      include: [
+        {
+          model: Animal,
+          as: 'animaux',
+        },
+      ],
+    });
+
+    if (!habitat) {
+      return res.status(404).json({ error: 'Habitat introuvable' });
+    }
+
+    res.json(habitat);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Créer habitat (ADMIN)
 app.post('/api/habitats', authenticateToken, async (req, res) => {
   try {
