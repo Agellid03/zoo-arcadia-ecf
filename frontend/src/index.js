@@ -4,11 +4,28 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { BrowserRouter } from 'react-router-dom';
+
+/**
+ * POINT D'ENTRÉE APPLICATION
+ *
+ * ARCHITECTURE :
+ * - BrowserRouter au niveau le plus haut
+ * - Englobe toute l'application
+ * - Permet navigation dans tous composants
+ *
+ * AVANTAGES :
+ * - Router disponible partout
+ * - Hooks (useNavigate, useParams) fonctionnent
+ * - Structure propre et logique
+ */
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>,
 );
 

@@ -1,34 +1,37 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// Import des composants layout
 import Header from './components/Header';
-import Accueil from './pages/Accueil';
-import Habitats from './pages/Habitats';
-import Services from './pages/Services';
-import Contact from './pages/Contact';
 import Footer from './components/Footer';
-import HabitatDetail from './pages/HabitatDetail';
-import AnimalDetail from './pages/AnimalDetail';
-import Login from './pages/Login';
 
-const App = () => {
+// Import du router centralisé
+import AppRoutes from './router/AppRoutes';
+
+/**
+ * COMPOSANT PRINCIPAL APPLICATION
+ *
+ * ARCHITECTURE SIMPLIFIÉE :
+ * - Layout fixe (Header + Main + Footer)
+ * - Routes centralisées dans AppRoutes
+ * - BrowserRouter dans index.js
+ *
+ * RESPONSABILITÉS :
+ * - Structure générale de l'app
+ * - Layout responsive Bootstrap
+ * - Import et organisation composants
+ */
+function App() {
   return (
-    <div className="App">
-      <Router>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Accueil />} />
-          <Route path="/habitats" element={<Habitats />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/habitat/:id" element={<HabitatDetail />} />
-          <Route path="/animal/:id" element={<AnimalDetail />} />
-          <Route path="/connexion" element={<Login />} />
-        </Routes>
-        <Footer />
-      </Router>
+    <div className="App d-flex flex-column min-vh-100">
+      <Header />
+
+      <main className="flex-grow-1">
+        <AppRoutes />
+      </main>
+
+      <Footer />
     </div>
   );
-};
+}
 
 export default App;
