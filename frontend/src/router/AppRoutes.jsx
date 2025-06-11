@@ -11,6 +11,7 @@ import Contact from '../pages/Contact';
 
 // Import authentification
 import Login from '../pages/Login';
+import DashboardAdmin from '../pages/DashboardAdmin';
 
 // Import dashboards (à créer)
 // import DashboardAdmin from '../pages/dashboards/DashboardAdmin';
