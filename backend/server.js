@@ -42,7 +42,8 @@ const authenticateToken = (req, res, next) => {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-//Middlewares
+
+//* Middlewares
 app.use(cors());
 app.use(express.json());
 
@@ -56,30 +57,9 @@ app.get('/', (req, res) => {
   });
 });
 
-//* ROUTES AUTHENTIFICATION
+//* ROUTES AUTHENTIFICATION (US9)
 
-// Création utilisateur
-app.post('/api/users', async (req, res) => {
-  try {
-    const { email, password, role } = req.body;
-
-    const user = await User.create({
-      email: email,
-      password: password,
-      role: role,
-    });
-
-    res.json({
-      message: 'Utilisateur créé',
-      user: user,
-    });
-  } catch (error) {
-    console.error('Erreur', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Connexion
+// Connexion utilisateur
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -113,9 +93,142 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-//* ROUTES HABITATS
+//* Route de test protection
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({
+    message: 'Accès autorisé !',
+    user: req.user,
+  });
+});
 
-// Lister tous les habitats (PUBLIC)
+//* ROUTES GESTION UTILISATEURS (US6 - Admin)
+
+// Créer utilisateur (Admin)
+app.post('/api/users', async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+
+    const user = await User.create({
+      email: email,
+      password: password,
+      role: role,
+    });
+
+    res.json({
+      message: 'Utilisateur créé',
+      user: user,
+    });
+  } catch (error) {
+    console.error('Erreur', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Lister tous les utilisateurs (Admin)
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const users = await User.findAll({
+      attributes: ['id', 'email', 'role', 'createdAt'], // Exclure password
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({
+      message: 'Liste des utilisateurs',
+      users: users,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Modifier utilisateur (Admin)
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const userId = parseInt(req.params.id);
+    const { email, role, password } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable' });
+    }
+
+    // Préparer les données à mettre à jour
+    const updateData = {};
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (password) updateData.password = password; // Sera hashé par le hook beforeUpdate
+
+    await user.update(updateData);
+
+    res.json({
+      message: 'Utilisateur mis à jour avec succès',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Supprimer utilisateur (Admin)
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const userId = parseInt(req.params.id);
+
+    // Vérifier que l'admin ne se supprime pas lui-même
+    if (userId === req.user.userId) {
+      return res
+        .status(400)
+        .json({ error: 'Vous ne pouvez pas supprimer votre propre compte' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable' });
+    }
+
+    await user.destroy();
+
+    res.json({
+      message: 'Utilisateur supprimé avec succès',
+      deleted_user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTES HABITATS (US4)
+
+// Lister tous les habitats (Public)
 app.get('/api/habitats', async (req, res) => {
   try {
     const habitats = await Habitat.findAll({
@@ -128,7 +241,7 @@ app.get('/api/habitats', async (req, res) => {
   }
 });
 
-// Détail habitat avec animaux (PUBLIC)
+// Détail habitat avec animaux (Public)
 app.get('/api/habitats/:id', async (req, res) => {
   try {
     const habitatId = parseInt(req.params.id);
@@ -154,7 +267,7 @@ app.get('/api/habitats/:id', async (req, res) => {
   }
 });
 
-// Créer habitat (ADMIN)
+// Créer habitat (Admin)
 app.post('/api/habitats', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -168,7 +281,7 @@ app.post('/api/habitats', authenticateToken, async (req, res) => {
   }
 });
 
-// Modifier habitat (ADMIN)
+// Modifier habitat (Admin)
 app.put('/api/habitats/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -182,7 +295,7 @@ app.put('/api/habitats/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Supprimer habitat (ADMIN)
+// Supprimer habitat (Admin)
 app.delete('/api/habitats/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -204,13 +317,44 @@ app.delete('/api/habitats/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Ajouter commentaire vétérinaire sur habitat
+// Lister commentaires habitats (Admin/Vétérinaire)
+app.get(
+  '/api/habitats/:id/commentaires',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      if (req.user.role !== 'admin' && req.user.role !== 'veterinaire') {
+        return res
+          .status(403)
+          .json({ error: 'Accès réservé aux administrateurs et vétérinaires' });
+      }
+
+      const habitatId = parseInt(req.params.id);
+
+      const commentaires = await CommentaireHabitat.findAll({
+        where: { habitat_id: habitatId },
+        include: [
+          { model: Habitat, as: 'habitat' },
+          { model: User, as: 'veterinaire', attributes: ['email'] },
+        ],
+        order: [['createdAt', 'DESC']],
+      });
+
+      res.json(commentaires);
+    } catch (error) {
+      console.error('Erreur:', error);
+      res.status(500).json({ error: 'Erreur serveur' });
+    }
+  },
+);
+
+//* Ajouter commentaire vétérinaire sur habitat (US8)
 app.post(
   '/api/habitats/:id/commentaires',
   authenticateToken,
   async (req, res) => {
     try {
-      // 1. Vérifier que c'est un vétérinaire
+      // Vérifier que c'est un vétérinaire
       if (req.user.role !== 'veterinaire') {
         return res
           .status(403)
@@ -220,13 +364,13 @@ app.post(
       const habitatId = parseInt(req.params.id);
       const { commentaire, statut_habitat } = req.body;
 
-      // 2. Vérifier que l'habitat existe
+      // Vérifier que l'habitat existe
       const habitat = await Habitat.findByPk(habitatId);
       if (!habitat) {
         return res.status(404).json({ error: 'Habitat introuvable' });
       }
 
-      // 3. Créer le commentaire
+      // Créer le commentaire
       const nouveauCommentaire = await CommentaireHabitat.create({
         habitat_id: habitatId,
         veterinaire_id: req.user.userId,
@@ -245,9 +389,9 @@ app.post(
   },
 );
 
-//* ROUTES ANIMAUX
+//* ROUTES ANIMAUX (US4)
 
-// Détail animal + dernier rapport (PUBLIC)
+// Détail animal + dernier rapport (Public)
 app.get('/api/animaux/:id', async (req, res) => {
   try {
     const animalId = req.params.id;
@@ -276,7 +420,42 @@ app.get('/api/animaux/:id', async (req, res) => {
   }
 });
 
-// Créer animal (ADMIN)
+// Incrémenter consultation animal - Compteur MongoDB (US11)
+app.post('/api/animaux/:id/view', async (req, res) => {
+  try {
+    const animalId = parseInt(req.params.id);
+
+    // Récupérer l'animal pour avoir son nom
+    const animal = await Animal.findByPk(animalId);
+    if (!animal) {
+      return res.status(404).json({ error: 'Animal introuvable' });
+    }
+
+    // Incrémenter ou créer statistique MongoDB
+    await AnimalStats.findOneAndUpdate(
+      { animal_id: animalId },
+      {
+        animal_name: animal.prenom,
+        $inc: { views: 1 },
+        last_viewed: new Date(),
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
+
+    res.json({
+      message: 'Consultation enregistrée',
+      animal: animal.prenom,
+    });
+  } catch (error) {
+    console.error('Erreur stats:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Créer animal (Admin)
 app.post('/api/animaux', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -304,7 +483,7 @@ app.post('/api/animaux', authenticateToken, async (req, res) => {
   }
 });
 
-// Modifier animal (ADMIN)
+// Modifier animal (Admin)
 app.put('/api/animaux/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -318,7 +497,7 @@ app.put('/api/animaux/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Supprimer animal (ADMIN)
+// Supprimer animal (Admin)
 app.delete('/api/animaux/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -339,44 +518,9 @@ app.delete('/api/animaux/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTE STATISTIQUES - Incrémenter consultation animal
-app.post('/api/animaux/:id/view', async (req, res) => {
-  try {
-    const animalId = parseInt(req.params.id);
+//* ROUTES SERVICES (US3)
 
-    // 1. Récupérer l'animal pour avoir son nom
-    const animal = await Animal.findByPk(animalId);
-    if (!animal) {
-      return res.status(404).json({ error: 'Animal introuvable' });
-    }
-
-    // 2. Incrémenter ou créer statistique MongoDB
-    await AnimalStats.findOneAndUpdate(
-      { animal_id: animalId },
-      {
-        animal_name: animal.prenom,
-        $inc: { views: 1 },
-        last_viewed: new Date(),
-      },
-      {
-        upsert: true,
-        new: true,
-      },
-    );
-
-    res.json({
-      message: 'Consultation enregistrée',
-      animal: animal.prenom,
-    });
-  } catch (error) {
-    console.error('Erreur stats:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-//* ROUTES SERVICES
-
-// Lister services (PUBLIC)
+// Lister services (Public)
 app.get('/api/services', async (req, res) => {
   try {
     const services = await Service.findAll();
@@ -387,7 +531,7 @@ app.get('/api/services', async (req, res) => {
   }
 });
 
-// Créer service (ADMIN/EMPLOYÉ)
+// Créer service (Admin/Employé)
 app.post('/api/services', authenticateToken, async (req, res) => {
   try {
     const { nom, description } = req.body;
@@ -399,6 +543,7 @@ app.post('/api/services', authenticateToken, async (req, res) => {
 
     res.json({
       message: 'Service créé',
+      service: service,
     });
   } catch (error) {
     console.error('Erreur', error);
@@ -406,7 +551,39 @@ app.post('/api/services', authenticateToken, async (req, res) => {
   }
 });
 
-// Supprimer service (ADMIN)
+// Modifier service (Admin)
+app.put('/api/services/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    const serviceId = parseInt(req.params.id);
+    const { nom, description } = req.body;
+
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ error: 'Service introuvable' });
+    }
+
+    await service.update({
+      nom: nom || service.nom,
+      description: description || service.description,
+    });
+
+    res.json({
+      message: 'Service mis à jour avec succès',
+      service: service,
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Supprimer service (Admin)
 app.delete('/api/services/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -427,9 +604,9 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES AVIS
+//* ROUTES AVIS (US5)
 
-// Lister avis approuvés (PUBLIC)
+// Lister avis approuvés (Public)
 app.get('/api/avis', async (req, res) => {
   try {
     const avis = await Avis.findAll({ where: { statut: 'approuve' } });
@@ -440,7 +617,35 @@ app.get('/api/avis', async (req, res) => {
   }
 });
 
-// Créer avis (VISITEUR)
+// Lister tous les avis (Admin/Employé)
+app.get('/api/avis/all', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin' && req.user.role !== 'employe') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs et employés' });
+    }
+
+    const avis = await Avis.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'employe',
+          attributes: ['email'],
+          required: false,
+        },
+      ],
+    });
+
+    res.json(avis);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Créer avis (Visiteur)
 app.post('/api/avis', async (req, res) => {
   try {
     const { pseudo, texte } = req.body;
@@ -464,7 +669,7 @@ app.post('/api/avis', async (req, res) => {
   }
 });
 
-// Valider avis (EMPLOYÉ)
+// Valider avis (Employé)
 app.put('/api/avis/:id', authenticateToken, async (req, res) => {
   try {
     const avisId = req.params.id;
@@ -490,9 +695,9 @@ app.put('/api/avis/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES RAPPORTS VÉTÉRINAIRES
+//* ROUTES RAPPORTS VÉTÉRINAIRES (US8)
 
-// Lister tous les rapports (ADMIN)
+// Lister tous les rapports (Admin)
 app.get('/api/rapports', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -516,7 +721,7 @@ app.get('/api/rapports', authenticateToken, async (req, res) => {
   }
 });
 
-// Créer rapport (VÉTÉRINAIRE)
+// Créer rapport (Vétérinaire)
 app.post('/api/rapports', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'veterinaire') {
@@ -552,40 +757,9 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTE DASHBOARD - Statistiques consultation animaux (ADMIN)
-app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
-  try {
-    // Vérifier que c'est un admin
-    if (req.user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Accès réservé aux administrateurs' });
-    }
+//* ROUTES CONSOMMATION NOURRITURE (US7/US8)
 
-    // Récupérer toutes les statistiques triées par popularité
-    const stats = await AnimalStats.find({})
-      .sort({ views: -1 }) // Tri décroissant (plus populaire en premier)
-      .limit(20); // Top 20 pour éviter surcharge
-
-    // Calculer statistiques globales
-    const totalViews = await AnimalStats.aggregate([
-      { $group: { _id: null, total: { $sum: '$views' } } },
-    ]);
-
-    res.json({
-      animals_stats: stats,
-      total_consultations: totalViews[0]?.total || 0,
-      most_popular: stats[0]?.animal_name || 'Aucune consultation',
-      stats_count: stats.length,
-    });
-  } catch (error) {
-    console.error('Erreur dashboard:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-//* ROUTES CONSOMMATION NOURRITURE
-
-// Lister consommations (VÉTÉRINAIRE)
+// Lister consommations (Vétérinaire)
 app.get('/api/consommations', authenticateToken, async (req, res) => {
   try {
     const consommations = await ConsommationNourriture.findAll({
@@ -602,7 +776,7 @@ app.get('/api/consommations', authenticateToken, async (req, res) => {
   }
 });
 
-// Enregistrer consommation (EMPLOYÉ)
+// Enregistrer consommation (Employé)
 app.post('/api/consommations', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'employe') {
@@ -636,7 +810,41 @@ app.post('/api/consommations', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTE CONTACT
+//* ROUTE DASHBOARD ADMIN (US6/US11)
+
+// Statistiques consultation animaux (Admin)
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+  try {
+    // Vérifier que c'est un admin
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Accès réservé aux administrateurs' });
+    }
+
+    // Récupérer toutes les statistiques triées par popularité
+    const stats = await AnimalStats.find({})
+      .sort({ views: -1 }) // Tri décroissant (plus populaire en premier)
+      .limit(20); // Top 20 pour éviter surcharge
+
+    // Calculer statistiques globales
+    const totalViews = await AnimalStats.aggregate([
+      { $group: { _id: null, total: { $sum: '$views' } } },
+    ]);
+
+    res.json({
+      animals_stats: stats,
+      total_consultations: totalViews[0]?.total || 0,
+      most_popular: stats[0]?.animal_name || 'Aucune consultation',
+      stats_count: stats.length,
+    });
+  } catch (error) {
+    console.error('Erreur dashboard:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+//* ROUTE CONTACT (US10)
 
 app.post('/api/contact', async (req, res) => {
   try {
@@ -652,15 +860,6 @@ app.post('/api/contact', async (req, res) => {
     console.error('Erreur:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
-});
-
-//* ROUTE DE TEST PROTECTION
-
-app.get('/api/protected', authenticateToken, (req, res) => {
-  res.json({
-    message: 'Accès autorisé !',
-    user: req.user,
-  });
 });
 
 //* DÉMARRAGE SERVEUR
