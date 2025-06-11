@@ -9,6 +9,7 @@ import Contact from './pages/Contact';
 import Footer from './components/Footer';
 import HabitatDetail from './pages/HabitatDetail';
 import AnimalDetail from './pages/AnimalDetail';
+import Login from './pages/Login';
 
 const App = () => {
   return (
@@ -22,6 +23,7 @@ const App = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/habitat/:id" element={<HabitatDetail />} />
           <Route path="/animal/:id" element={<AnimalDetail />} />
+          <Route path="/connexion" element={<Login />} />
         </Routes>
         <Footer />
       </Router>
