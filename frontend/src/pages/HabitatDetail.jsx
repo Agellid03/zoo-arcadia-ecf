@@ -22,14 +22,11 @@ const HabitatDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔧 FORCE LOCALHOST EN DÉVELOPPEMENT
+  // FORCE LOCALHOST EN DÉVELOPPEMENT
   const API_BASE_URL = 'http://localhost:5000/api';
 
   const fetchHabitat = async () => {
     try {
-      console.log('ID récupéré:', id); // Debug
-      console.log('API URL utilisée:', `${API_BASE_URL}/habitats/${id}`); // Debug
-
       // ✅ UTILISATION API_BASE_URL CORRECTE
       const response = await axios.get(`${API_BASE_URL}/habitats/${id}`);
 
