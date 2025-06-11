@@ -11,12 +11,11 @@ import Contact from '../pages/Contact';
 
 // Import authentification
 import Login from '../pages/Login';
-import DashboardAdmin from '../pages/DashboardAdmin';
 
-// Import dashboards (à créer)
-// import DashboardAdmin from '../pages/dashboards/DashboardAdmin';
-// import DashboardEmploye from '../pages/dashboards/DashboardEmploye';
-// import DashboardVeterinaire from '../pages/dashboards/DashboardVeterinaire';
+// Import dashboards
+import DashboardAdmin from '../pages/DashboardAdmin';
+import DashboardEmploye from '../pages/DashboardEmploye';
+import DashboardVeterinaire from '../pages/DashboardVeterinaire';
 
 /**
  * CENTRALISATION DES ROUTES
@@ -47,11 +46,9 @@ const AppRoutes = () => {
       <Route path="/connexion" element={<Login />} />
 
       {/*  ROUTES DASHBOARDS - Protégées par rôle */}
-
       <Route path="/dashboard/admin" element={<DashboardAdmin />} />
-      {/* <Route path="/dashboard/employe" element={<DashboardEmploye />} />
+      <Route path="/dashboard/employe" element={<DashboardEmploye />} />
       <Route path="/dashboard/veterinaire" element={<DashboardVeterinaire />} />
-      */}
 
       {/*  ROUTE 404 - Page non trouvée */}
       <Route
