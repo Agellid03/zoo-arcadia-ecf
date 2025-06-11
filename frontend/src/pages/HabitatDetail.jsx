@@ -22,7 +22,6 @@ const HabitatDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // FORCE LOCALHOST EN DÉVELOPPEMENT
   const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
 
   const fetchHabitat = async () => {

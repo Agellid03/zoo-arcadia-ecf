@@ -12,6 +12,23 @@
 - **Navigation imbriquée** : Habitats → Habitat détail → Animal détail
 - **API avec paramètres** : GET /api/habitats/:id
 - **Gestion erreurs** : 404, validation ID, loading states
+## Architecture Router
+
+### Structure :
+- **index.js** : BrowserRouter global
+- **App.js** : Layout + logique principale
+- **router/AppRoutes.jsx** : Centralisation routes
+
+### Avantages :
+- **Séparation responsabilités** : chaque fichier a un rôle clair
+- **Maintenabilité** : routes centralisées
+- **Réutilisabilité** : hooks navigation partout
+- **Lisibilité** : structure évidente
+
+### Pattern :
+- Layout fixe (Header/Footer)
+- Contenu dynamique (Routes)
+- Navigation globale accessible
 
 ## Structure App.js
 - **Router englobe tout** : BrowserRouter = contexte navigation

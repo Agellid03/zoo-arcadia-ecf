@@ -89,3 +89,53 @@
 - **Loading states séparés** : UX progressive, chaque section charge indépendamment
 - **slice(0, 3)** : limiter résultats pour preview
 - **substring(0, 100)** : tronquer texte long
+
+
+
+## Authentification JWT (US9)
+
+### Concepts clés :
+- **JWT Token** : passeport numérique signé par le serveur
+- **localStorage** : stockage côté client (simple pour ECF)
+- **Headers Authorization** : `Bearer ${token}` pour API protégées
+- **Redirection automatique** : selon rôle utilisateur
+
+### Flux authentification :
+1. Utilisateur saisit email/password
+2. Frontend → POST /api/login
+3. Backend vérifie → génère token JWT
+4. Frontend stocke token + user data
+5. Redirection vers dashboard selon rôle
+
+### Sécurité :
+- Token contient : userID, role, expiration
+- Signature serveur avec JWT_SECRET
+- Vérification token sur routes protégées
+
+## Dashboards Complets (US6, US7, US8)
+
+### Architecture commune :
+- **Protection par rôle** : vérification token + role
+- **Déconnexion** : nettoyage localStorage
+- **États UI** : loading, error, success
+- **Modals** : formulaires complexes
+
+### Dashboard Admin (US6) :
+- **Stats MongoDB** : affichage US11 pour analyse
+- **Gestion utilisateurs** : CRUD complet
+- **Vue d'ensemble** : rapports vétérinaires
+
+### Dashboard Employé (US7) :
+- **Validation avis** : approuver/rejeter visiteurs
+- **Alimentation** : enregistrement consommation
+- **Services** : modification autorisée
+
+### Dashboard Vétérinaire (US8) :
+- **Rapports animaux** : état santé détaillé
+- **Commentaires habitats** : amélioration environnement
+- **Suivi alimentation** : contrôle employés
+
+### Formulaire Avis (US5) :
+- **Soumission visiteurs** : pseudo + texte
+- **Statut en_attente** : modération obligatoire
+- **Validation** : longueur, caractères
