@@ -17,7 +17,9 @@ const {
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-//* MIDDLEWARE D'AUTHENTIFICATION
+// ==========================================
+// MIDDLEWARE D'AUTHENTIFICATION
+// ==========================================
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -38,16 +40,20 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-//* CONFIGURATION EXPRESS
+// ==========================================
+// CONFIGURATION EXPRESS
+// ==========================================
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-//* Middlewares
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-//* ROUTE DE TEST
+// ==========================================
+// ROUTE DE TEST
+// ==========================================
 
 app.get('/', (req, res) => {
   res.json({
@@ -57,7 +63,9 @@ app.get('/', (req, res) => {
   });
 });
 
-//* ROUTES AUTHENTIFICATION (US9)
+// ==========================================
+// ROUTES AUTHENTIFICATION (US9)
+// ==========================================
 
 // Connexion utilisateur
 app.post('/api/login', async (req, res) => {
@@ -93,7 +101,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-//* Route de test protection
+// Route de test protection
 app.get('/api/protected', authenticateToken, (req, res) => {
   res.json({
     message: 'Accès autorisé !',
@@ -101,7 +109,9 @@ app.get('/api/protected', authenticateToken, (req, res) => {
   });
 });
 
-//* ROUTES GESTION UTILISATEURS (US6 - Admin)
+// ==========================================
+// ROUTES GESTION UTILISATEURS (US6 - Admin)
+// ==========================================
 
 // Créer utilisateur (Admin)
 app.post('/api/users', async (req, res) => {
@@ -226,7 +236,9 @@ app.delete('/api/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES HABITATS (US4)
+// ==========================================
+// ROUTES HABITATS (US4)
+// ==========================================
 
 // Lister tous les habitats (Public)
 app.get('/api/habitats', async (req, res) => {
@@ -348,7 +360,7 @@ app.get(
   },
 );
 
-//* Ajouter commentaire vétérinaire sur habitat (US8)
+// Ajouter commentaire vétérinaire sur habitat (US8)
 app.post(
   '/api/habitats/:id/commentaires',
   authenticateToken,
@@ -389,7 +401,9 @@ app.post(
   },
 );
 
-//* ROUTES ANIMAUX (US4)
+// ==========================================
+// ROUTES ANIMAUX (US4)
+// ==========================================
 
 // Détail animal + dernier rapport (Public)
 app.get('/api/animaux/:id', async (req, res) => {
@@ -518,7 +532,9 @@ app.delete('/api/animaux/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES SERVICES (US3)
+// ==========================================
+// ROUTES SERVICES (US3)
+// ==========================================
 
 // Lister services (Public)
 app.get('/api/services', async (req, res) => {
@@ -604,20 +620,11 @@ app.delete('/api/services/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES AVIS (US5)
+// ==========================================
+// ROUTES AVIS (US5) - ORDRE CORRIGÉ
+// ==========================================
 
-// Lister avis approuvés (Public)
-app.get('/api/avis', async (req, res) => {
-  try {
-    const avis = await Avis.findAll({ where: { statut: 'approuve' } });
-    res.json(avis);
-  } catch (error) {
-    console.error('Erreur:', error);
-    res.status(500).json({ error: 'Erreur serveur' });
-  }
-});
-
-// Lister tous les avis (Admin/Employé)
+// Lister tous les avis (Admin/Employé) - ROUTE SPÉCIFIQUE EN PREMIER
 app.get('/api/avis/all', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'admin' && req.user.role !== 'employe') {
@@ -638,6 +645,17 @@ app.get('/api/avis/all', authenticateToken, async (req, res) => {
       ],
     });
 
+    res.json(avis);
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Lister avis approuvés (Public) - ROUTE GÉNÉRALE APRÈS
+app.get('/api/avis', async (req, res) => {
+  try {
+    const avis = await Avis.findAll({ where: { statut: 'approuve' } });
     res.json(avis);
   } catch (error) {
     console.error('Erreur:', error);
@@ -695,7 +713,9 @@ app.put('/api/avis/:id', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES RAPPORTS VÉTÉRINAIRES (US8)
+// ==========================================
+// ROUTES RAPPORTS VÉTÉRINAIRES (US8)
+// ==========================================
 
 // Lister tous les rapports (Admin)
 app.get('/api/rapports', authenticateToken, async (req, res) => {
@@ -757,7 +777,9 @@ app.post('/api/rapports', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTES CONSOMMATION NOURRITURE (US7/US8)
+// ==========================================
+// ROUTES CONSOMMATION NOURRITURE (US7/US8)
+// ==========================================
 
 // Lister consommations (Vétérinaire)
 app.get('/api/consommations', authenticateToken, async (req, res) => {
@@ -810,7 +832,9 @@ app.post('/api/consommations', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTE DASHBOARD ADMIN (US6/US11)
+// ==========================================
+// ROUTE DASHBOARD ADMIN (US6/US11)
+// ==========================================
 
 // Statistiques consultation animaux (Admin)
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
@@ -844,7 +868,9 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   }
 });
 
-//* ROUTE CONTACT (US10)
+// ==========================================
+// ROUTE CONTACT (US10)
+// ==========================================
 
 app.post('/api/contact', async (req, res) => {
   try {
@@ -862,7 +888,9 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-//* DÉMARRAGE SERVEUR
+// ==========================================
+// DÉMARRAGE SERVEUR
+// ==========================================
 
 sequelize.sync().then(() => {
   connectMongoDB();
