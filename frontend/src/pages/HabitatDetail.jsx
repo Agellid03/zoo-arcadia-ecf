@@ -23,11 +23,11 @@ const HabitatDetail = () => {
   const [error, setError] = useState(null);
 
   // FORCE LOCALHOST EN DÉVELOPPEMENT
-  const API_BASE_URL = 'http://localhost:5000/api';
+  const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
 
   const fetchHabitat = async () => {
     try {
-      // ✅ UTILISATION API_BASE_URL CORRECTE
+      // UTILISATION API_BASE_URL
       const response = await axios.get(`${API_BASE_URL}/habitats/${id}`);
 
       console.log('Habitat reçu:', response.data); // Debug
