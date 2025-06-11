@@ -87,6 +87,10 @@ const DashboardEmploye = () => {
       });
 
       setAvis(avisResponse.data.filter((a) => a.statut === 'en_attente'));
+      console.log(
+        '✅ Avis filtrés:',
+        avisResponse.data.filter((a) => a.statut === 'en_attente'),
+      ); //! Debug
 
       // 2. RÉCUPÉRER LISTE ANIMAUX (pour alimentation)
       console.log('🐾 Chargement liste animaux...');
@@ -104,11 +108,12 @@ const DashboardEmploye = () => {
         }
       });
       setAnimaux(tousAnimaux);
-
+      console.log('✅ Animaux extraits:', tousAnimaux); //! Debug
       // 3. RÉCUPÉRER SERVICES
       console.log('🎯 Chargement services...');
       const servicesResponse = await axios.get(`${API_BASE_URL}/services`);
       setServices(servicesResponse.data);
+      console.log('✅ Services reçus:', servicesResponse.data);
     } catch (error) {
       console.error('❌ Erreur chargement dashboard:', error);
       setError('Erreur chargement des données');
