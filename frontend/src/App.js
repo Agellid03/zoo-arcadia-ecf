@@ -8,6 +8,7 @@ import Services from './pages/Services';
 import Contact from './pages/Contact';
 import Footer from './components/Footer';
 import HabitatDetail from './pages/HabitatDetail';
+
 const App = () => {
   return (
     <div className="App">
