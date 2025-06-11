@@ -22,34 +22,23 @@ const HabitatDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
-
-  /** FETCH HABITAT SPÉCIFIQUE avec animaux
-    API: GET /habitats/:id (avec include animaux)*/
+  // 🔧 FORCE LOCALHOST EN DÉVELOPPEMENT
+  const API_BASE_URL = 'http://localhost:5000/api';
 
   const fetchHabitat = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      console.log('ID récupéré:', id); // Debug
+      console.log('API URL utilisée:', `${API_BASE_URL}/habitats/${id}`); // Debug
 
-      console.log(`🔍 Chargement habitat ID: ${id}`);
-
-      // APPEL API avec ID spécifique
+      // ✅ UTILISATION API_BASE_URL CORRECTE
       const response = await axios.get(`${API_BASE_URL}/habitats/${id}`);
 
-      console.log('✅ Habitat chargé:', response.data);
+      console.log('Habitat reçu:', response.data); // Debug
       setHabitat(response.data);
-    } catch (err) {
-      console.error('❌ Erreur chargement habitat:', err);
-
-      if (err.response?.status === 404) {
-        setError('Habitat non trouvé');
-      } else if (err.response?.status === 400) {
-        setError('ID habitat invalide');
-      } else {
-        setError('Erreur chargement habitat');
-      }
-    } finally {
+      setLoading(false);
+    } catch (error) {
+      console.error('Erreur API:', error.response?.data || error.message);
+      setError('Habitat non trouvé');
       setLoading(false);
     }
   };
@@ -126,12 +115,20 @@ const HabitatDetail = () => {
           <nav aria-label="breadcrumb">
             <ol className="breadcrumb">
               <li className="breadcrumb-item">
-                <Link to="/" className="text-decoration-none">
+                <Link
+                  to="/"
+                  className="text-decoration-none"
+                  style={{ color: 'var(--zoo-primary)' }}
+                >
                   Accueil
                 </Link>
               </li>
               <li className="breadcrumb-item">
-                <Link to="/habitats" className="text-decoration-none">
+                <Link
+                  to="/habitats"
+                  className="text-decoration-none"
+                  style={{ color: 'var(--zoo-primary)' }}
+                >
                   Habitats
                 </Link>
               </li>
@@ -177,6 +174,9 @@ const HabitatDetail = () => {
                   borderRadius: '15px',
                 }}
                 alt={habitat.nom}
+                onError={(e) => {
+                  e.target.src = '/images/default-habitat.jpg';
+                }}
               />
             </Card>
           </Col>
@@ -202,12 +202,15 @@ const HabitatDetail = () => {
             <Col md={6} lg={4} key={animal.id} className="mb-4">
               <Card className="card-zoo h-100 shadow-sm">
                 {/* IMAGE ANIMAL (si disponible) */}
-                {animal.image && (
+                {animal.image_url && (
                   <Card.Img
                     variant="top"
-                    src={animal.image}
+                    src={animal.image_url}
                     style={{ height: '200px', objectFit: 'cover' }}
                     alt={animal.prenom}
+                    onError={(e) => {
+                      e.target.src = '/images/default-animal.jpg';
+                    }}
                   />
                 )}
 
@@ -220,16 +223,18 @@ const HabitatDetail = () => {
                     <strong>Race :</strong> {animal.race}
                   </Card.Text>
 
-                  {/* ÉTAT ANIMAL (si disponible) */}
-                  {animal.etat && (
+                  {/* ÉTAT ANIMAL (si disponible dans rapport vétérinaire) */}
+                  {animal.rapports && animal.rapports.length > 0 && (
                     <div className="mb-3">
                       <Badge
                         bg={
-                          animal.etat === 'Bonne santé' ? 'success' : 'warning'
+                          animal.rapports[0].etat_animal === 'bon'
+                            ? 'success'
+                            : 'warning'
                         }
                         className="mb-2"
                       >
-                        État : {animal.etat}
+                        État : {animal.rapports[0].etat_animal}
                       </Badge>
                     </div>
                   )}
@@ -272,7 +277,9 @@ const HabitatDetail = () => {
                       Dr. {commentaire.veterinaire?.nom || 'Vétérinaire'}
                     </h6>
                     <small className="text-muted">
-                      {new Date(commentaire.date_visite).toLocaleDateString()}
+                      {new Date(commentaire.date_visite).toLocaleDateString(
+                        'fr-FR',
+                      )}
                     </small>
                   </div>
                   <p className="mb-2">{commentaire.commentaire}</p>

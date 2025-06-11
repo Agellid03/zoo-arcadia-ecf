@@ -8,15 +8,16 @@ import {
   Spinner,
   Alert,
 } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 const Habitats = () => {
   // États locaux du composant
-  const [habitats, setHabitats] = useState([]); // Données API
-  const [loading, setLoading] = useState(true); // État chargement
-  const [error, setError] = useState(null); // Gestion erreurs
+  const [habitats, setHabitats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // URL API - backend déployé
+  // URL API - CORRECTION pour localhost en développement
   const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
 
   const fetchHabitats = async () => {
@@ -30,7 +31,7 @@ const Habitats = () => {
       // Appel API avec Axios
       const response = await axios.get(`${API_BASE_URL}/habitats`);
 
-      console.log(' Données reçues:', response.data);
+      console.log('✅ Données reçues:', response.data);
 
       // Mise à jour état avec données reçues
       setHabitats(response.data);
@@ -113,6 +114,9 @@ const Habitats = () => {
                     variant="top"
                     src={habitat.image}
                     style={{ height: '200px', objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.target.src = '/images/default-habitat.jpg';
+                    }}
                   />
                 )}
 
@@ -128,19 +132,31 @@ const Habitats = () => {
                   {habitat.animaux && habitat.animaux.length > 0 && (
                     <div className="mb-3">
                       <h6 style={{ color: 'var(--zoo-secondary)' }}>
-                        Animaux présents :
+                        Animaux présents ({habitat.animaux.length}) :
                       </h6>
                       <ul className="list-unstyled">
-                        {habitat.animaux.map((animal) => (
+                        {habitat.animaux.slice(0, 3).map((animal) => (
                           <li key={animal.id}>
                             🐾 {animal.prenom} ({animal.race})
                           </li>
                         ))}
+                        {habitat.animaux.length > 3 && (
+                          <li className="text-muted">
+                            ... et {habitat.animaux.length - 3} autres
+                          </li>
+                        )}
                       </ul>
                     </div>
                   )}
 
-                  <Button className="btn-zoo mt-auto">Voir les animaux</Button>
+                  {/* 🔧 CORRECTION BOUTON - Navigation vers détail habitat */}
+                  <Button
+                    as={Link}
+                    to={`/habitat/${habitat.id}`}
+                    className="btn-zoo mt-auto"
+                  >
+                    🔍 Découvrir cet habitat
+                  </Button>
                 </Card.Body>
               </Card>
             </Col>
