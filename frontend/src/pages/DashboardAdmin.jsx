@@ -12,6 +12,10 @@ import {
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import GestionUtilisateurs from '../components/GestionUtilisateurs';
+import GestionHabitats from '../components/GestionHabitats';
+import GestionAnimaux from '../components/GestionAnimaux';
+import GestionServices from '../components/GestionServices';
 
 /**
  * DASHBOARD ADMINISTRATEUR (US6)
@@ -30,32 +34,32 @@ const DashboardAdmin = () => {
   const [rapports, setRapports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showGestionUtilisateurs, setShowGestionUtilisateurs] = useState(false);
+  const [showGestionHabitats, setShowGestionHabitats] = useState(false);
+  const [showGestionAnimaux, setShowGestionAnimaux] = useState(false);
+  const [showGestionServices, setShowGestionServices] = useState(false);
 
-  // Configuration API
   const API_BASE_URL = 'https://zoo-arcadia-ecf.onrender.com/api';
 
   // Récupérer données utilisateur stockées
   const user = JSON.parse(localStorage.getItem('zoo_user') || '{}');
   const token = localStorage.getItem('zoo_token');
 
-  // Configuration headers avec token
   const apiHeaders = {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
   };
 
-  // Déconnexion
   const handleLogout = () => {
     localStorage.removeItem('zoo_token');
     localStorage.removeItem('zoo_user');
     navigate('/login');
   };
 
-  // Vérification authentification
   useEffect(() => {
     if (!token || user.role !== 'admin') {
-      console.log(' Accès non autorisé, redirection login');
-      navigate('/login');
+      console.log(' Accès non autorisé.');
+      navigate('/connexion');
       return;
     }
 
@@ -63,12 +67,10 @@ const DashboardAdmin = () => {
     fetchDashboardData();
   }, []);
 
-  // Récupération données dashboard
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // 1. RÉCUPÉRER STATS MONGODB (US11)
       console.log(' Chargement statistiques MongoDB...');
       const statsResponse = await axios.get(`${API_BASE_URL}/dashboard/stats`, {
         headers: apiHeaders,
@@ -77,14 +79,13 @@ const DashboardAdmin = () => {
       console.log(' Stats reçues:', statsResponse.data);
       setStats(statsResponse.data);
 
-      // 2. RÉCUPÉRER DERNIERS RAPPORTS
       console.log(' Chargement rapports vétérinaires...');
       const rapportsResponse = await axios.get(`${API_BASE_URL}/rapports`, {
         headers: apiHeaders,
       });
 
       console.log(' Rapports reçus:', rapportsResponse.data);
-      setRapports(rapportsResponse.data.slice(0, 5)); // 5 derniers
+      setRapports(rapportsResponse.data.slice(0, 5));
     } catch (error) {
       console.error(' Erreur chargement dashboard:', error);
 
@@ -99,7 +100,6 @@ const DashboardAdmin = () => {
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <Container className="mt-5 text-center">
@@ -113,7 +113,6 @@ const DashboardAdmin = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <Container className="mt-5">
@@ -300,38 +299,65 @@ const DashboardAdmin = () => {
             <Card.Body>
               <Row>
                 <Col md={3} className="mb-3">
-                  <Button variant="outline-primary" className="w-100" disabled>
+                  <Button
+                    variant="outline-primary"
+                    className="w-100"
+                    onClick={() => setShowGestionUtilisateurs(true)}
+                  >
                     👥 Gérer Utilisateurs
                   </Button>
-                  <small className="text-muted">À implémenter</small>
                 </Col>
                 <Col md={3} className="mb-3">
-                  <Button variant="outline-success" className="w-100" disabled>
+                  <Button
+                    variant="outline-success"
+                    className="w-100"
+                    onClick={() => setShowGestionHabitats(true)}
+                  >
                     🏡 Gérer Habitats
                   </Button>
-                  <small className="text-muted">À implémenter</small>
                 </Col>
                 <Col md={3} className="mb-3">
-                  <Button variant="outline-info" className="w-100" disabled>
+                  <Button
+                    variant="outline-info"
+                    className="w-100"
+                    onClick={() => setShowGestionAnimaux(true)}
+                  >
                     🐾 Gérer Animaux
                   </Button>
-                  <small className="text-muted">À implémenter</small>
                 </Col>
                 <Col md={3} className="mb-3">
                   <Button
                     variant="outline-secondary"
                     className="w-100"
-                    disabled
+                    onClick={() => setShowGestionServices(true)}
                   >
                     🎯 Gérer Services
                   </Button>
-                  <small className="text-muted">À implémenter</small>
                 </Col>
               </Row>
             </Card.Body>
           </Card>
         </Col>
       </Row>
+      <GestionUtilisateurs
+        show={showGestionUtilisateurs}
+        onHide={() => setShowGestionUtilisateurs(false)}
+      />
+      {/* MODAL GESTION HABITATS */}
+      <GestionHabitats
+        show={showGestionHabitats}
+        onHide={() => setShowGestionHabitats(false)}
+      />
+      {/* MODAL GESTION ANIMAUX */}
+      <GestionAnimaux
+        show={showGestionAnimaux}
+        onHide={() => setShowGestionAnimaux(false)}
+      />
+      {/* MODAL GESTION SERVICES */}
+      <GestionServices
+        show={showGestionServices}
+        onHide={() => setShowGestionServices(false)}
+      />
     </Container>
   );
 };

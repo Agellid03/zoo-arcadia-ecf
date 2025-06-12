@@ -37,6 +37,12 @@ const DashboardEmploye = () => {
   // États modals
   const [showAlimentationModal, setShowAlimentationModal] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [showEditServiceModal, setShowEditServiceModal] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+  const [editServiceForm, setEditServiceForm] = useState({
+    nom: '',
+    description: '',
+  });
 
   // États formulaire alimentation
   const [alimentationForm, setAlimentationForm] = useState({
@@ -90,7 +96,7 @@ const DashboardEmploye = () => {
       console.log(
         '✅ Avis filtrés:',
         avisResponse.data.filter((a) => a.statut === 'en_attente'),
-      ); //! Debug
+      );
 
       // 2. RÉCUPÉRER LISTE ANIMAUX (pour alimentation)
       console.log('🐾 Chargement liste animaux...');
@@ -108,7 +114,8 @@ const DashboardEmploye = () => {
         }
       });
       setAnimaux(tousAnimaux);
-      console.log('✅ Animaux extraits:', tousAnimaux); //! Debug
+      console.log('✅ Animaux extraits:', tousAnimaux);
+
       // 3. RÉCUPÉRER SERVICES
       console.log('🎯 Chargement services...');
       const servicesResponse = await axios.get(`${API_BASE_URL}/services`);
@@ -175,11 +182,55 @@ const DashboardEmploye = () => {
       );
 
       setShowAlimentationModal(false);
-      console.log('✅ Alimentation enregistrée'); // Optionnel
+      console.log('✅ Alimentation enregistrée');
     } catch (error) {
       console.error('❌ Erreur enregistrement alimentation:', error);
       setError("Erreur lors de l'enregistrement");
     }
+  };
+
+  // Ouvrir modal édition service
+  const openEditServiceModal = (service) => {
+    setSelectedService(service);
+    setEditServiceForm({ nom: service.nom, description: service.description });
+    setShowEditServiceModal(true);
+  };
+
+  // Modifier service
+  const handleEditService = async (e) => {
+    e.preventDefault();
+
+    try {
+      console.log('✏️ Modification service ID:', selectedService.id);
+
+      await axios.put(
+        `${API_BASE_URL}/services/${selectedService.id}`,
+        editServiceForm,
+        { headers: apiHeaders },
+      );
+
+      // Succès
+      setShowEditServiceModal(false);
+      setSelectedService(null);
+
+      // Rafraîchir les services
+      const servicesResponse = await axios.get(`${API_BASE_URL}/services`);
+      setServices(servicesResponse.data);
+
+      console.log('✅ Service modifié avec succès');
+    } catch (error) {
+      console.error('❌ Erreur modification service:', error);
+      setError('Erreur lors de la modification du service');
+    }
+  };
+
+  // Handler formulaire service
+  const handleEditServiceFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditServiceForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // Loading state
@@ -373,7 +424,11 @@ const DashboardEmploye = () => {
                       </td>
                       <td>{service.description}</td>
                       <td>
-                        <Button size="sm" variant="outline-primary" disabled>
+                        <Button
+                          size="sm"
+                          variant="outline-primary"
+                          onClick={() => openEditServiceModal(service)}
+                        >
                           ✏️ Modifier
                         </Button>
                       </td>
@@ -474,6 +529,54 @@ const DashboardEmploye = () => {
           </Button>
           <Button variant="success" onClick={handleAlimentationSubmit}>
             📝 Enregistrer
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* MODAL ÉDITION SERVICE */}
+      <Modal
+        show={showEditServiceModal}
+        onHide={() => setShowEditServiceModal(false)}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>✏️ Modifier le service</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleEditService}>
+            <Form.Group className="mb-3">
+              <Form.Label>Nom du service :</Form.Label>
+              <Form.Control
+                type="text"
+                name="nom"
+                value={editServiceForm.nom}
+                onChange={handleEditServiceFormChange}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Description :</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                name="description"
+                value={editServiceForm.description}
+                onChange={handleEditServiceFormChange}
+                required
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowEditServiceModal(false)}
+          >
+            Annuler
+          </Button>
+          <Button variant="warning" onClick={handleEditService}>
+            ✏️ Modifier
           </Button>
         </Modal.Footer>
       </Modal>
