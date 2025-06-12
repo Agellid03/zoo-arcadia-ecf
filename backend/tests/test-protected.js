@@ -37,5 +37,4 @@ const testWithToken = async () => {
   }
 };
 
-// Lance les 2 tests
 testProtectedRoute().then(() => testWithToken());
