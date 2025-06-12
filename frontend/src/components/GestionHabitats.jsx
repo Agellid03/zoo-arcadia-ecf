@@ -560,7 +560,6 @@ const GestionHabitats = ({ show, onHide }) => {
           </Form>
         </Modal.Body>
 
-        {/* 🔧 FOOTER CORRIGÉ AVEC BOUTON SUPPRIMER */}
         <Modal.Footer>
           <div className="d-flex justify-content-between align-items-center w-100">
             {/* BOUTON SUPPRIMER À GAUCHE */}
